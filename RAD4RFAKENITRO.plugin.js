@@ -538,7 +538,7 @@ module.exports = class RAD4RFAKENITRO {
                 Dispatcher.subscribe("CURRENT_USER_UPDATE", this.applyPremiumType);
                 this.applyPremiumType();
             }else{
-                if(CurrentUser.premiumType != ORIGINAL_NITRO_STATUS)
+                if(CurrentUser && CurrentUser.premiumType != ORIGINAL_NITRO_STATUS)
                     CurrentUser.premiumType = ORIGINAL_NITRO_STATUS;
             }
         }catch(err){
@@ -1686,12 +1686,13 @@ module.exports = class RAD4RFAKENITRO {
     } */
 
     applyPremiumType(){
-        const currentUser = UserStore.getCurrentUser();
+        const currentUser = UserStore?.getCurrentUser?.();
+        if(!currentUser) return;
         currentUser.premiumType = settings.changePremiumType2;
     }
 
     updateCurrentUser(){
-        CurrentUser = UserStore.getCurrentUser();
+        CurrentUser = UserStore?.getCurrentUser?.();
     }
 
     //#region Display Name Styles
@@ -4913,7 +4914,8 @@ module.exports = class RAD4RFAKENITRO {
 
     stop(){
         controller.abort();
-        CurrentUser.premiumType = ORIGINAL_NITRO_STATUS;
+        if(CurrentUser)
+            CurrentUser.premiumType = ORIGINAL_NITRO_STATUS;
         Patcher.unpatchAll();
         Dispatcher.unsubscribe("COLLECTIBLES_CATEGORIES_FETCH_SUCCESS", this.storeProductsFromCategories);
         Dispatcher.unsubscribe("APP_ICON_UPDATED", this.saveAppIcon);
