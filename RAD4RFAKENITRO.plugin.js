@@ -2516,7 +2516,11 @@ module.exports = class RAD4RFAKENITRO {
                 return;
             }
 
-            Patcher.instead(stickerSendabilityModule, key, replacement);
+            try{
+                Patcher.instead(stickerSendabilityModule, key, replacement);
+            }catch(err){
+                Logger.warn(`Skipping sticker patch ${key}: ${err}`);
+            }
         };
 
         patchStickerFunction("getStickerSendability", () => {
