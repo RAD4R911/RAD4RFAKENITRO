@@ -533,12 +533,6 @@ module.exports = class RAD4RFAKENITRO {
 
         Dispatcher.subscribe("CURRENT_USER_UPDATE", this.updateCurrentUser);
 
-        try {
-            this.removeSoundmojiUpsell();
-        } catch(err) {
-            Logger.error("Error occurred during removeSoundmojiUpsell() " + err);
-        }
-
         try{
             if(settings.changePremiumType2 > -1 && settings.changePremiumType2 <= 3){
                 Dispatcher.subscribe("CURRENT_USER_UPDATE", this.applyPremiumType);
@@ -1690,41 +1684,6 @@ module.exports = class RAD4RFAKENITRO {
             return Promise.resolve();
         });
     } */
-
-    removeSoundmojiUpsell(){
-        const patchModuleFns = modules => {
-            for(const mod of modules ?? []){
-                if(!mod || typeof mod !== "object") continue;
-
-                for(const key of Object.keys(mod)){
-                    const fn = mod[key];
-                    if(typeof fn !== "function") continue;
-
-                    const source = fn.toString?.() ?? "";
-                    const lower = source.toLowerCase();
-                    if(!lower.includes("soundmoji")) continue;
-                    if(!lower.includes("premium") && !source.includes("Get Nitro") && !lower.includes("upsell")) continue;
-
-                    Patcher.instead(mod, key, () => null);
-                }
-            }
-        };
-
-        patchModuleFns(Webpack.getModules(
-            Webpack.Filters.bySource("Soundmoji", "Get Nitro"),
-            { searchExports: true }
-        ));
-
-        patchModuleFns(Webpack.getModules(
-            Webpack.Filters.bySource("soundmoji", "premium"),
-            { searchExports: true }
-        ));
-
-        patchModuleFns(Webpack.getModules(
-            Webpack.Filters.bySource("soundboard", "premium"),
-            { searchExports: true }
-        ));
-    }
 
     applyPremiumType(){
         const currentUser = UserStore.getCurrentUser();
