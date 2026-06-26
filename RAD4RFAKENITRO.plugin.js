@@ -1,6 +1,7 @@
 /**
  * @name RAD4RFAKENITRO
  * @author RAD4R
+ * @authorId 755936860932669541
  * @version 6.9.4
  * @source https://github.com/RAD4R911/RAD4RFAKENITRO
  * @description Unlock all screensharing modes, use cross-server & GIF emotes, and more!
@@ -257,7 +258,7 @@ const config = {
         "name": "RAD4RFAKENITRO",
         "authors": [{
             "name": "RAD4R",
-            "discord_id": "359063827091816448",
+            "discord_id": "755936860932669541",
             "github_username": "RAD4R911"
         }],
         "version": "6.9.4",
@@ -3414,7 +3415,7 @@ module.exports = class RAD4RFAKENITRO {
             }
 
             //if this user is Riolubruh, and they don't already have the badge applied,
-            if(ret.userId == "359063827091816448" && !badgesList.includes("yabdp_creator")){
+            if(ret.userId == "755936860932669541" && !badgesList.includes("yabdp_creator")){
                 //add the yabdp creator badge to riolubruh's list of badges.
                 ret.badges.push({
                     id: "yabdp_creator",
