@@ -4363,23 +4363,60 @@ module.exports = class RAD4RFAKENITRO {
     //#endregion
 
     //#region Sticker Uploader
-    async stickerSending(){
-        Patcher.instead(MessageActions, "sendStickers", (_, args, originalFunction) => {
-            let stickerID = args[1][0];
-            let stickerURL = "https://media.discordapp.net/stickers/" + stickerID + ".png?size=4096&quality=lossless";
-            let currentChannelId = SelectedChannelStore.getChannelId();
+    getStickerBypassUrl(stickerId){
+        return `https://media.discordapp.net/stickers/${stickerId}.png?size=4096&quality=lossless`;
+    }
 
-            if(settings.uploadStickers){
-                let emoji = new Object();
-                emoji.animated = false;
-                emoji.name = args[0];
-                let msg = [undefined, { content: "" }];
-                this.UploadEmote(stickerURL, currentChannelId, msg, emoji, 1, send);
+    getStickerSendArgs(args){
+        const stickerIds = [];
+        let channelId = SelectedChannelStore.getChannelId();
+
+        const collect = value => {
+            if(!value) return;
+
+            if(Array.isArray(value)){
+                for(const item of value) collect(item);
                 return;
             }
-            if(!settings.uploadStickers){
-                let messageContent = { content: stickerURL, tts: false, invalidEmojis: [], validNonShortcutEmojis: [] };
-                MessageActions.sendMessage(currentChannelId, messageContent, undefined, {});
+
+            if(typeof value === "string" || typeof value === "number"){
+                const text = String(value);
+                if(/^\d{15,25}$/.test(text)) stickerIds.push(text);
+                return;
+            }
+
+            if(typeof value !== "object") return;
+
+            channelId = value.channelId ?? value.channel_id ?? channelId;
+
+            collect(value.stickerIds);
+            collect(value.sticker_ids);
+            collect(value.stickers);
+            collect(value.sticker);
+
+            if(value.id && (value.format_type || value.formatType || value.name || value.tags))
+                collect(value.id);
+        };
+
+        for(const arg of args)
+            collect(arg);
+
+        return {
+            channelId,
+            stickerIds: [...new Set(stickerIds.filter(id => id !== channelId))]
+        };
+    }
+
+    async stickerSending(){
+        Patcher.instead(MessageActions, "sendStickers", (_, args, originalFunction) => {
+            const { channelId, stickerIds } = this.getStickerSendArgs(args);
+            if(!stickerIds.length)
+                return originalFunction(...args);
+
+            for(const stickerID of stickerIds){
+                const stickerURL = this.getStickerBypassUrl(stickerID);
+                const messageContent = { content: stickerURL, tts: false, invalidEmojis: [], validNonShortcutEmojis: [] };
+                MessageActions.sendMessage(channelId, messageContent, undefined, {});
             }
         });
     }
@@ -4692,6 +4729,8 @@ module.exports = class RAD4RFAKENITRO {
         try {
             //load settings from config
             settings = Object.assign({}, defaultSettings, Data.load("settings"));
+            settings.stickerBypass = true;
+            settings.uploadStickers = false;
             settings.soundmojiEnabled = false;
         } catch(err){
             //The super mega awesome data-unfucker 9000
