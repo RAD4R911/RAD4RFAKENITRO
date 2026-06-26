@@ -4760,6 +4760,13 @@ module.exports = class RAD4RFAKENITRO {
             settings.stickerBypass = true;
             settings.uploadStickers = false;
             settings.soundmojiEnabled = false;
+            settings.fakeProfileThemes = false;
+            settings.fakeProfileBanners = false;
+            settings.fakeAvatarDecorations = false;
+            settings.unlockAppIcons = false;
+            settings.profileEffects = false;
+            settings.customPFPs = false;
+            settings.nameplatesEnabled = false;
         } catch(err){
             //The super mega awesome data-unfucker 9000
             Logger.warn(err);
