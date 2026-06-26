@@ -2,7 +2,7 @@
  * @name RAD4RFAKENITRO
  * @author RAD4R
  * @version 6.9.4
- * @source https://github.com/R4DJR/RAD4RFAKENITRO
+ * @source https://github.com/RAD4R911/RAD4RFAKENITRO
  * @description Unlock all screensharing modes, use cross-server & GIF emotes, and more!
  */
 /*@cc_on
@@ -258,12 +258,12 @@ const config = {
         "authors": [{
             "name": "RAD4R",
             "discord_id": "359063827091816448",
-            "github_username": "R4DJR"
+            "github_username": "RAD4R911"
         }],
         "version": "6.9.4",
         "description": "Unlock all screensharing modes, use cross-server & GIF emotes, and more!",
-        "github": "https://github.com/R4DJR/RAD4RFAKENITRO",
-        "github_raw": "https://raw.githubusercontent.com/R4DJR/RAD4RFAKENITRO/main/RAD4RFAKENITRO.plugin.js"
+        "github": "https://github.com/RAD4R911/RAD4RFAKENITRO",
+        "github_raw": "https://raw.githubusercontent.com/RAD4R911/RAD4RFAKENITRO/main/RAD4RFAKENITRO.plugin.js"
     },
     changelog: [
         {
