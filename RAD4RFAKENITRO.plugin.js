@@ -2509,10 +2509,20 @@ module.exports = class RAD4RFAKENITRO {
     // #endregion
 
     unlockStickers(){
-        Patcher.instead(stickerSendabilityModule, "getStickerSendability", () => {
+        const patchStickerFunction = (key, replacement) => {
+            const descriptor = Object.getOwnPropertyDescriptor(stickerSendabilityModule, key);
+            if(descriptor?.writable === false){
+                Logger.warn(`Skipping read-only sticker patch: ${key}`);
+                return;
+            }
+
+            Patcher.instead(stickerSendabilityModule, key, replacement);
+        };
+
+        patchStickerFunction("getStickerSendability", () => {
             return 0; //SENDABLE
         });
-        Patcher.instead(stickerSendabilityModule, "isSendableSticker", () => {
+        patchStickerFunction("isSendableSticker", () => {
             return true;
         });
     }
