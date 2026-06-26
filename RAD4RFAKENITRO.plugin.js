@@ -3926,7 +3926,7 @@ module.exports = class RAD4RFAKENITRO {
                             this.UploadEmote(stickerURL, currentChannelId, msgtemp, emoji, 0, send);
                             return;
                         } else{
-                            let messageContent = { content: stickerURL, tts: false, invalidEmojis: [], validNonShortcutEmojis: [] };
+                            let messageContent = { content: this.getStickerBypassContent(stickerId), tts: false, invalidEmojis: [], validNonShortcutEmojis: [] };
                             MessageActions.sendMessage(currentChannelId, messageContent, undefined, {});
                             return;
                         }
@@ -4367,6 +4367,12 @@ module.exports = class RAD4RFAKENITRO {
         return `https://media.discordapp.net/stickers/${stickerId}.png?size=4096&quality=lossless`;
     }
 
+    getStickerBypassContent(stickerId, stickerName = "sticker"){
+        const url = this.getStickerBypassUrl(stickerId);
+        const safeName = String(stickerName || "sticker").replaceAll("\\", "\\\\").replaceAll("]", "\\]");
+        return `[${safeName}](${url})`;
+    }
+
     getStickerSendArgs(args){
         const stickerIds = [];
         let channelId = SelectedChannelStore.getChannelId();
@@ -4414,8 +4420,7 @@ module.exports = class RAD4RFAKENITRO {
                 return originalFunction(...args);
 
             for(const stickerID of stickerIds){
-                const stickerURL = this.getStickerBypassUrl(stickerID);
-                const messageContent = { content: stickerURL, tts: false, invalidEmojis: [], validNonShortcutEmojis: [] };
+                const messageContent = { content: this.getStickerBypassContent(stickerID), tts: false, invalidEmojis: [], validNonShortcutEmojis: [] };
                 MessageActions.sendMessage(channelId, messageContent, undefined, {});
             }
         });
