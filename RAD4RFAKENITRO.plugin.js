@@ -251,6 +251,7 @@ let badgeUserIDs = [];
 let fetchedUserBg = false;
 let fetchedUserPfp = false;
 let profileEffects = {};
+let recentStickerBypassSends = new Map();
 
 // #region Config
 const config = {
@@ -3914,7 +3915,7 @@ module.exports = class RAD4RFAKENITRO {
                 if(stickerIds){
                     for(let i = 0; i < stickerIds.length; i++){
                         let stickerId = stickerIds[i];
-                        let stickerURL = "https://media.discordapp.net/stickers/" + stickerId + ".png?size=4096&quality=lossless";
+                        let stickerURL = this.getStickerBypassUrl(stickerId);
                         let msgtemp = [...msg];
                         msgtemp[2].stickerIds = [];
                         if(i > 0) msgtemp[1].content = "";
@@ -3926,6 +3927,9 @@ module.exports = class RAD4RFAKENITRO {
                             this.UploadEmote(stickerURL, currentChannelId, msgtemp, emoji, 0, send);
                             return;
                         } else{
+                            if(this.shouldSkipStickerBypassSend(currentChannelId, stickerId))
+                                return;
+
                             let messageContent = { content: this.getStickerBypassContent(stickerId), tts: false, invalidEmojis: [], validNonShortcutEmojis: [] };
                             MessageActions.sendMessage(currentChannelId, messageContent, undefined, {});
                             return;
@@ -4364,13 +4368,29 @@ module.exports = class RAD4RFAKENITRO {
 
     //#region Sticker Uploader
     getStickerBypassUrl(stickerId){
-        return `https://media.discordapp.net/stickers/${stickerId}.png?size=4096&quality=lossless`;
+        return `https://media.discordapp.net/stickers/${stickerId}.png?size=160&quality=lossless`;
     }
 
     getStickerBypassContent(stickerId, stickerName = "sticker"){
         const url = this.getStickerBypassUrl(stickerId);
         const safeName = String(stickerName || "sticker").replaceAll("\\", "\\\\").replaceAll("]", "\\]");
         return `[${safeName}](${url})`;
+    }
+
+    shouldSkipStickerBypassSend(channelId, stickerId){
+        const key = `${channelId}:${stickerId}`;
+        const now = Date.now();
+        const lastSentAt = recentStickerBypassSends.get(key) ?? 0;
+        if(now - lastSentAt < 1500)
+            return true;
+
+        recentStickerBypassSends.set(key, now);
+
+        for(const [savedKey, savedAt] of recentStickerBypassSends)
+            if(now - savedAt > 10000)
+                recentStickerBypassSends.delete(savedKey);
+
+        return false;
     }
 
     getStickerSendArgs(args){
@@ -4420,6 +4440,9 @@ module.exports = class RAD4RFAKENITRO {
                 return originalFunction(...args);
 
             for(const stickerID of stickerIds){
+                if(this.shouldSkipStickerBypassSend(channelId, stickerID))
+                    continue;
+
                 const messageContent = { content: this.getStickerBypassContent(stickerID), tts: false, invalidEmojis: [], validNonShortcutEmojis: [] };
                 MessageActions.sendMessage(channelId, messageContent, undefined, {});
             }
