@@ -165,7 +165,7 @@ const {
 //#endregion
 const fs = require("fs");
 const path = require("path");
-let CurrentUser = UserStore?.getCurrentUser();
+let CurrentUser = UserStore?.getCurrentUser?.();
 const ORIGINAL_NITRO_STATUS = CurrentUser?.premiumType;
 const nodePatcher = ReactUtils.createNodePatcher();
 
@@ -584,7 +584,7 @@ module.exports = class RAD4RFAKENITRO {
             try {
                 Patcher.after(UserProfileStore, "getUserProfile", (_, args, ret) => {
                     if(ret == undefined) return;
-                    ret.premiumType = 2;
+                    if(ret) ret.premiumType = 2;
                 });
             } catch(err){
                 Logger.error(err);
@@ -1688,7 +1688,7 @@ module.exports = class RAD4RFAKENITRO {
     applyPremiumType(){
         const currentUser = UserStore?.getCurrentUser?.();
         if(!currentUser) return;
-        currentUser.premiumType = settings.changePremiumType2;
+        if(currentUser) currentUser.premiumType = settings.changePremiumType2;
     }
 
     updateCurrentUser(){
@@ -2153,9 +2153,9 @@ module.exports = class RAD4RFAKENITRO {
     //this functionality was previously in getRevealedText, but it's been separated to allow it to be checked on its own
     getRevealedTextPerServer(userId, shouldInclude){
         //per-server pronoun field check
-        const guildId = SelectedGuildStore.getGuildId();
+        const guildId = SelectedGuildStore?.getGuildId?.();
         if(guildId){
-            let userGuildProfile = UserProfileStore.getGuildMemberProfile(userId, guildId);
+            let userGuildProfile = UserProfileStore?.getGuildMemberProfile?.(userId, guildId);
             if(userGuildProfile?.pronouns){
                 if(userGuildProfile.pronouns.includes(shouldInclude)){
                     let revealedText = this.secondsightifyRevealOnly(String(userGuildProfile.pronouns));
@@ -2187,7 +2187,7 @@ module.exports = class RAD4RFAKENITRO {
         if(perServer != undefined && perServer != "") return perServer;
 
         //get the user's profile from the cached user profiles
-        let userProfile = UserProfileStore.getUserProfile(userId);
+        let userProfile = UserProfileStore?.getUserProfile?.(userId);
         //if this user's profile has been downloaded
         if(userProfile){
             //if their bio is empty, move on to the next check.
@@ -2208,7 +2208,7 @@ module.exports = class RAD4RFAKENITRO {
         try{
             //get Custom Status
             //avoid using findActivity function due to conflict with ChatFilter (#290)
-            customStatusActivity = PresenceStore.getActivities(userId).find((e) => e.name == "Custom Status" || e.id == "custom");
+            customStatusActivity = PresenceStore?.getActivities?.(userId)?.find((e) => e.name == "Custom Status" || e.id == "custom");
         }catch(err){
             Logger.error("Something went wrong getting custom status, oh god oh shit!", err);
         }
@@ -3045,8 +3045,9 @@ module.exports = class RAD4RFAKENITRO {
     async experiments(){
         try {
             //code heavily modified from https://gist.github.com/JohannesMP/afdf27383608c3b6f20a6a072d0be93c?permalink_comment_id=4784940#gistcomment-4784940
-            const currentUser = UserStore.getCurrentUser();
-            currentUser.flags |= 1;
+            const currentUser = UserStore?.getCurrentUser?.();
+            if (!currentUser) return;
+            currentUser.flags = (currentUser.flags ?? 0) | 1;
             const Stores = Object.values(UserStore._dispatcher._actionHandlers._dependencyGraph.nodes);
             Stores.find((x) => x.name === "DeveloperExperimentStore").actionHandler["CONNECTION_OPEN"]();
             try { Stores.find((x) => x.name === "ExperimentStore").actionHandler["OVERLAY_INITIALIZE"]({ user: { flags: 1 } }); } catch {}
@@ -3255,7 +3256,7 @@ module.exports = class RAD4RFAKENITRO {
                 Patcher.instead(this.CustomThemesEditor, render, (_,[args],ogFunction) => {
                     let ret = ogFunction(args);
                     //dont replace footer if user is premium
-                    if(CurrentUser.premiumType == 2) return ret;
+                    if(CurrentUser?.premiumType == 2) return ret;
         
                     //take the onSaveTheme function from the original footer cause we still need it
                     const onSaveTheme = ret?.props?.children?.[1]?.props?.onSaveTheme;
@@ -3311,6 +3312,7 @@ module.exports = class RAD4RFAKENITRO {
     // #region Custom PFP Decode
     customProfilePictureDecoding(){
         Patcher.instead(getAvatarUrlModule.prototype, "getAvatarURL", (user, [userId, size, shouldAnimate], originalFunction) => {
+            if(!user?.id) return originalFunction(userId, size, shouldAnimate);
 
             //userpfp closer integration
             //if we haven't fetched userPFP database yet and it's enabled
@@ -4468,14 +4470,14 @@ module.exports = class RAD4RFAKENITRO {
                 .split(",")
                 .map(x => parseInt(x.replace("#", "0x"), 16));
                 ret.themeColors = colors;
-                ret.premiumType = 2;
+                if(ret) ret.premiumType = 2;
                 return true;
             }
 
             //per-server pronoun field check
-            const guildId = SelectedGuildStore.getGuildId();
+            const guildId = SelectedGuildStore?.getGuildId?.();
             if(guildId){
-                let userGuildProfile = UserProfileStore.getGuildMemberProfile(userId, guildId);
+                let userGuildProfile = UserProfileStore?.getGuildMemberProfile?.(userId, guildId);
                 if(userGuildProfile?.pronouns){
                     let success = decodeProfileColors(userGuildProfile.pronouns);
                     if(success) return;
@@ -4516,12 +4518,12 @@ module.exports = class RAD4RFAKENITRO {
         Patcher.after(UserProfileStore, "getUserProfile" ,(_, [userId], ret) => {
             if(ret != undefined){
                 if(ret.bio?.includes?.(`\uDB40\uDC42\uDB40\uDC7B`)){
-                    ret.premiumType = 2;
+                    if(ret) ret.premiumType = 2;
                     return;
                 }
                 let perServer = this.getRevealedTextPerServer(userId,`\uDB40\uDC42\uDB40\uDC7B`);
                 if(perServer){
-                    ret.premiumType = 2;
+                    if(ret) ret.premiumType = 2;
                 }
             }
         });
@@ -4596,7 +4598,7 @@ module.exports = class RAD4RFAKENITRO {
         Dispatcher.subscribe("APP_ICON_UPDATED", this.saveAppIcon);
         
         Patcher.instead(RegularAppIcon, "render", (_,[args],ogFunction) => {
-            const currentDesktopIcon = AppIconPersistedStoreState.getCurrentDesktopIcon();
+            const currentDesktopIcon = AppIconPersistedStoreState?.getCurrentDesktopIcon?.();
             if(currentDesktopIcon == "AppIcon"){
                 return ogFunction(args);
             }else{
